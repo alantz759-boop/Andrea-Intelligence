@@ -246,3 +246,79 @@ body {
   margin: auto;
   padding: 20px;
 }
+
+/* ---------- Mobile back button (admin console) ---------- */
+.mobile-chat-header {
+  display: none;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.back-btn {
+  background: none;
+  border: none;
+  color: var(--accent-hover);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 4px;
+}
+
+/* ---------- Responsive: phones / narrow screens ---------- */
+@media (max-width: 640px) {
+  .topbar {
+    padding: 10px 14px;
+  }
+  .topbar h1 {
+    font-size: 14px;
+  }
+
+  /* Main visitor chat page */
+  .chat-wrap {
+    max-width: 100%;
+  }
+  .messages {
+    padding: 16px 10px;
+  }
+  .bubble {
+    max-width: 85%;
+    font-size: 14px;
+  }
+  .input-bar {
+    padding: 10px 10px 16px;
+  }
+  .join-screen {
+    padding: 0 20px;
+  }
+  .join-screen input {
+    width: 100%;
+    max-width: 280px;
+  }
+  .footnote {
+    font-size: 10px;
+    bottom: 6px;
+  }
+
+  /* Admin console: stack sidebar and chat instead of side-by-side */
+  .admin-layout {
+    position: relative;
+    overflow: hidden;
+  }
+  .sidebar {
+    width: 100%;
+    border-right: none;
+  }
+  .admin-layout .chat-wrap {
+    position: absolute;
+    inset: 0;
+    max-width: none !important;
+    background: var(--bg);
+    z-index: 2;
+  }
+  .mobile-chat-header {
+    display: block;
+  }
+  /* Hide the chat panel until a conversation is actively open on mobile */
+  .admin-layout:not(.mobile-chat-open) .chat-wrap {
+    display: none !important;
+  }
+}
