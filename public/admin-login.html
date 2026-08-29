@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin Login</title>
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="join-screen">
+    <div style="font-size:20px;font-weight:700;">🔒 Reply Console</div>
+    <input id="passwordInput" type="password" placeholder="Password" />
+    <button id="loginBtn">Enter</button>
+    <div id="errorMsg" style="color:#c0396a; font-size:13px; display:none;">Nice try, but that's not it.</div>
+  </div>
+
+  <script>
+    const passwordInput = document.getElementById("passwordInput");
+    const loginBtn = document.getElementById("loginBtn");
+    const errorMsg = document.getElementById("errorMsg");
+
+    async function attemptLogin() {
+      const password = passwordInput.value;
+      errorMsg.style.display = "none";
+      try {
+        const res = await fetch("/admin-login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          window.location.href = "/admin";
+        } else {
+          errorMsg.style.display = "block";
+          passwordInput.value = "";
+          passwordInput.focus();
+        }
+      } catch (err) {
+        errorMsg.textContent = "Something went wrong — try again.";
+        errorMsg.style.display = "block";
+      }
+    }
+
+    loginBtn.addEventListener("click", attemptLogin);
+    passwordInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") attemptLogin();
+    });
+    passwordInput.focus();
+  </script>
+</body>
+</html>

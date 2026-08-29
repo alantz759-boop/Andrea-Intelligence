@@ -36,10 +36,30 @@ function addBubble(sender, text) {
 
 joinBtn.addEventListener("click", () => {
   socket.emit("user_join", { userName: nameInput.value });
+});
+
+socket.on("joined", ({ conversationId, userName }) => {
+  localStorage.setItem("aiChatConversationId", conversationId);
+  localStorage.setItem("aiChatUserName", userName);
   joinScreen.style.display = "none";
   chatWrap.style.display = "flex";
   textInput.focus();
 });
+
+socket.on("history", ({ messages }) => {
+  if (messages.length > 0) {
+    emptyChatState.style.display = "none";
+    messages.forEach((m) => addBubble(m.sender, m.text));
+  }
+});
+
+// Returning visitor: reconnect to their saved conversation automatically.
+const savedConversationId = localStorage.getItem("aiChatConversationId");
+if (savedConversationId) {
+  joinScreen.style.display = "none";
+  chatWrap.style.display = "flex";
+  socket.emit("user_join", { conversationId: savedConversationId });
+}
 
 function sendMessage() {
   const text = textInput.value.trim();
@@ -67,7 +87,20 @@ socket.on("new_message", ({ sender, text }) => {
   addBubble(sender, text);
 });
 
+const TYPING_PHRASES = [
+  "Andrea is thinking…",
+  "Consulting my one brain cell…",
+  "Andrea is typing (moderately fast)…",
+  "Generating a totally-not-scripted response…",
+  "Processing at human speed…",
+];
+
 socket.on("ai_typing", ({ isTyping }) => {
-  typingIndicator.style.display = isTyping ? "block" : "none";
-  if (isTyping) messagesEl.scrollTop = messagesEl.scrollHeight;
+  if (isTyping) {
+    typingIndicator.textContent = TYPING_PHRASES[Math.floor(Math.random() * TYPING_PHRASES.length)];
+    typingIndicator.style.display = "block";
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  } else {
+    typingIndicator.style.display = "none";
+  }
 });

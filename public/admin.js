@@ -13,6 +13,10 @@ let typingTimeout = null;
 
 socket.emit("admin_join");
 
+socket.on("unauthorized", () => {
+  window.location.href = "/admin";
+});
+
 function renderSidebar() {
   sidebar.innerHTML = "";
   if (conversations.length === 0) {
