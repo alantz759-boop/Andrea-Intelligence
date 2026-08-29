@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin — Reply Console</title>
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+  <div class="topbar">
+    <h1>Reply Console (you are "the AI")</h1>
+  </div>
+
+  <div class="admin-layout">
+    <div id="sidebar" class="sidebar"></div>
+
+    <div id="chatWrap" class="chat-wrap" style="display:none; max-width:none; flex:1;">
+      <div id="messages" class="messages"></div>
+      <div class="input-bar">
+        <div class="input-row">
+          <textarea id="textInput" rows="1" placeholder="Reply as the assistant…"></textarea>
+          <button id="sendBtn" class="send-btn">➤</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="emptyState" class="empty-state">Select a conversation on the left</div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/admin.js"></script>
+</body>
+</html>
