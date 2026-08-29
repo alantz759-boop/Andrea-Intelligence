@@ -66,7 +66,7 @@ app.get("/admin", (req, res) => {
 
 // Conversations live in memory while the server runs (fast reads/writes),
 // and are mirrored to disk so they survive a restart.
-// { [conversationId]: { id, userSocketId, userName, messages: [{sender, text, ts}], lastAutoReplyTs } }
+// { [conversationId]: { id, userSocketId, userName, title, messages: [{sender, text, ts}], lastAutoReplyTs, awayNotice } }
 const conversations = loadConversations();
 
 function persist() {
@@ -77,10 +77,16 @@ function conversationSummary(conv) {
   return {
     id: conv.id,
     userName: conv.userName,
+    title: conv.title || null,
     lastMessage: conv.messages[conv.messages.length - 1] || null,
     messageCount: conv.messages.length,
     connected: !!conv.userSocketId,
   };
+}
+
+function makeTitle(text) {
+  const clean = text.trim().replace(/\s+/g, " ");
+  return clean.length > 40 ? clean.slice(0, 40) + "…" : clean;
 }
 
 function broadcastConversationList() {
@@ -97,9 +103,40 @@ const AWAY_MESSAGES = [
   "Out grabbing coffee to power my \"neural network.\" Back in a bit!",
 ];
 
+// Witty welcome-back messages, sent to anyone who got an away-message
+// once you reconnect to the admin console.
+const WELCOME_BACK_MESSAGES = [
+  "I'm back! What'd I miss?",
+  "Andrea has returned to her post 🫡",
+  "Back online — let's pick up where we left off!",
+  "Reconnected! Ready when you are.",
+  "I'm here now — thanks for your patience!",
+];
+
+// Tracked manually (rather than via the Socket.IO room) so we can reliably
+// detect the exact moment the admin count goes from 0 to 1 or back to 0.
+const adminSocketIds = new Set();
+
 function adminIsOnline() {
-  const room = io.sockets.adapter.rooms.get("admins");
-  return !!room && room.size > 0;
+  return adminSocketIds.size > 0;
+}
+
+function broadcastAdminStatus(online) {
+  io.to("users").emit("admin_status", { online });
+}
+
+function sendWelcomeBackMessages() {
+  Object.values(conversations).forEach((conv) => {
+    if (!conv.awayNotice) return;
+    const text = WELCOME_BACK_MESSAGES[Math.floor(Math.random() * WELCOME_BACK_MESSAGES.length)];
+    const message = { sender: "ai", text, ts: Date.now() };
+    conv.messages.push(message);
+    conv.awayNotice = false;
+    io.to(conv.id).emit("new_message", message);
+    io.to("admins").emit("admin_message_sent", { conversationId: conv.id, message });
+  });
+  broadcastConversationList();
+  persist();
 }
 
 io.on("connection", (socket) => {
@@ -112,8 +149,10 @@ io.on("connection", (socket) => {
       conv.userSocketId = socket.id;
       socket.data.conversationId = conv.id;
       socket.join(conv.id);
-      socket.emit("joined", { conversationId: conv.id, userName: conv.userName });
+      socket.join("users");
+      socket.emit("joined", { conversationId: conv.id, userName: conv.userName, isNew: false, title: conv.title || null });
       socket.emit("history", { messages: conv.messages });
+      socket.emit("admin_status", { online: adminIsOnline() });
       broadcastConversationList();
       persist();
       return;
@@ -125,10 +164,13 @@ io.on("connection", (socket) => {
       userSocketId: socket.id,
       userName: userName?.trim() || "Anonymous",
       messages: [],
+      title: null,
     };
     socket.data.conversationId = id;
     socket.join(id);
-    socket.emit("joined", { conversationId: id, userName: conversations[id].userName });
+    socket.join("users");
+    socket.emit("joined", { conversationId: id, userName: conversations[id].userName, isNew: true, title: null });
+    socket.emit("admin_status", { online: adminIsOnline() });
     broadcastConversationList();
     persist();
   });
@@ -140,6 +182,11 @@ io.on("connection", (socket) => {
 
     const message = { sender: "user", text: text.trim(), ts: Date.now() };
     conv.messages.push(message);
+
+    if (!conv.title) {
+      conv.title = makeTitle(message.text);
+      io.to(id).emit("title_updated", { conversationId: id, title: conv.title });
+    }
 
     // Show it in the user's own window
     io.to(id).emit("new_message", message);
@@ -157,6 +204,7 @@ io.on("connection", (socket) => {
       const awayMessage = { sender: "ai", text: awayText, ts: Date.now() };
       conv.messages.push(awayMessage);
       conv.lastAutoReplyTs = Date.now();
+      conv.awayNotice = true;
       io.to(id).emit("new_message", awayMessage);
       io.to("admins").emit("admin_message_sent", { conversationId: id, message: awayMessage });
       broadcastConversationList();
@@ -172,8 +220,15 @@ io.on("connection", (socket) => {
       socket.emit("unauthorized");
       return;
     }
+    const wasOnline = adminIsOnline();
+    adminSocketIds.add(socket.id);
     socket.join("admins");
     socket.emit("conversation_list", Object.values(conversations).map(conversationSummary));
+
+    if (!wasOnline) {
+      broadcastAdminStatus(true);
+      sendWelcomeBackMessages();
+    }
   });
 
   socket.on("admin_get_history", ({ conversationId }) => {
@@ -188,6 +243,7 @@ io.on("connection", (socket) => {
 
     const message = { sender: "ai", text: text.trim(), ts: Date.now() };
     conv.messages.push(message);
+    conv.awayNotice = false;
 
     // Push to the user as "the AI"
     io.to(conversationId).emit("new_message", message);
@@ -208,6 +264,13 @@ io.on("connection", (socket) => {
       conversations[id].userSocketId = null;
       broadcastConversationList();
       persist();
+    }
+
+    if (adminSocketIds.has(socket.id)) {
+      adminSocketIds.delete(socket.id);
+      if (!adminIsOnline()) {
+        broadcastAdminStatus(false);
+      }
     }
   });
 });

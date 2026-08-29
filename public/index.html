@@ -4,32 +4,50 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
 
-  <div class="topbar">
-    <h1>Assistant</h1>
-    <span><span class="status-dot online"></span><span style="font-size:12px;color:var(--text-muted)">Online</span></span>
-  </div>
+  <div class="app-layout">
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
 
-  <div id="joinScreen" class="join-screen">
-    <div style="font-size:22px;font-weight:700;">Welcome to your AI* assistant</div>
-    <input id="nameInput" type="text" placeholder="Your name (optional)" />
-    <button id="joinBtn">Start chatting</button>
-  </div>
-
-  <div class="footnote">*Andrea Intelligence</div>
-
-  <div id="chatWrap" class="chat-wrap" style="display:none;">
-    <div id="messages" class="messages">
-      <div id="emptyChatState" class="empty-chat-state">What can I moderately help you with?</div>
+    <div id="chatSidebar" class="chat-sidebar" style="display:none;">
+      <button id="newChatBtn" class="new-chat-btn">✏️ New chat</button>
+      <div id="chatList" class="chat-list"></div>
     </div>
-    <div id="typingIndicator" class="typing-indicator" style="display:none;">Assistant is typing…</div>
-    <div class="input-bar">
-      <div class="input-row">
-        <textarea id="textInput" rows="1" placeholder="Message the assistant…"></textarea>
-        <button id="sendBtn" class="send-btn">➤</button>
+
+    <div class="main-column">
+      <div class="topbar">
+        <span style="display:flex; align-items:center; gap:10px;">
+          <button id="menuBtn" class="menu-btn">☰</button>
+          <h1>✨ Assistant</h1>
+        </span>
+        <span><span id="statusDot" class="status-dot"></span><span id="statusText" style="font-size:12px;color:var(--text-muted)">Connecting…</span></span>
+      </div>
+
+      <div id="joinScreen" class="join-screen">
+        <div class="join-heading">🎀 Welcome to your AI* assistant 🎀</div>
+        <div id="tagline" class="tagline"></div>
+        <input id="nameInput" type="text" placeholder="Your name (optional)" />
+        <button id="joinBtn">Start chatting 💌</button>
+      </div>
+
+      <div class="footnote">*Andrea Intelligence</div>
+
+      <div id="chatWrap" class="chat-wrap" style="display:none;">
+        <div id="messages" class="messages">
+          <div id="emptyChatState" class="empty-chat-state">What can I moderately help you with?</div>
+        </div>
+        <div id="typingIndicator" class="typing-indicator" style="display:none;">Assistant is typing…</div>
+        <div class="input-bar">
+          <div class="input-row">
+            <textarea id="textInput" rows="1" placeholder="Message the assistant…"></textarea>
+            <button id="sendBtn" class="send-btn">➤</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
